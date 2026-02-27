@@ -52,7 +52,7 @@ interface RoomHonkPayload {
   sentAt: string;
 }
 
-function playHornSound() {
+function playHornTone() {
   const audioCtor =
     window.AudioContext ??
     (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -116,6 +116,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const [timeLeft, setTimeLeft]   = useState(TIMER_SECONDS);
   const revealCalled              = useRef(false);
   const lastHandledHonkId = useRef<string | null>(null);
+  const hornAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Nome salvo no sessionStorage pelo /create-room ou /join-room.
   // Sem nome salvo, redireciona para a tela de entrada da sala.
@@ -134,6 +135,16 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     setMounted(true);
   }, []);
 
+  // Áudio explícito de buzina com fallback para sintetizador
+  useEffect(() => {
+    const audio = new Audio("/sounds/horn.wav");
+    audio.preload = "auto";
+    hornAudioRef.current = audio;
+    return () => {
+      hornAudioRef.current = null;
+    };
+  }, []);
+
   // Mensagem temporária de feedback das ações da sala
   useEffect(() => {
     if (actionFeedback === "idle") return;
@@ -148,16 +159,30 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     return () => window.clearTimeout(timeout);
   }, [honkNotice]);
 
+  const playHornSound = useCallback(async () => {
+    const audio = hornAudioRef.current;
+    if (audio) {
+      try {
+        audio.currentTime = 0;
+        await audio.play();
+        return;
+      } catch {
+        // fallback abaixo
+      }
+    }
+    playHornTone();
+  }, []);
+
   const triggerHonkIfTarget = useCallback((payload: RoomHonkPayload) => {
     if (!myName) return;
     if (lastHandledHonkId.current === payload.honkId) return;
     lastHandledHonkId.current = payload.honkId;
     if (!payload.targets.includes(myName)) return;
 
-    playHornSound();
+    void playHornSound();
     if (navigator.vibrate) navigator.vibrate([180, 80, 180]);
     setHonkNotice(`${payload.triggeredBy} buzinou para você votar.`);
-  }, [myName]);
+  }, [myName, playHornSound]);
 
   // SSE — recebe atualizações em tempo real
   useEffect(() => {
@@ -644,7 +669,8 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 const avatarCls = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
                 const isHighest = hasOutliers && p.vote === maxVote;
                 const isLowest  = hasOutliers && p.vote === minVote;
-                const needsJustify = isHighest || isLowest;
+                const hasVote = p.vote != null;
+                const needsJustify = hasVote && winnerVote != null && p.vote !== winnerVote;
 
                 return (
                   <div
@@ -670,8 +696,14 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                     {card && <span className={`text-xs mt-0.5 ${isHighest ? "text-red-400" : isLowest ? "text-blue-400" : "text-purple-400"}`}>{card.label}</span>}
                     {needsJustify && (
                       <span className={`mt-2 text-xs font-bold px-2 py-0.5 rounded-full
-                        ${isHighest ? "bg-red-100 text-red-700 border border-red-200" : "bg-blue-100 text-blue-700 border border-blue-200"}`}>
-                        {isHighest ? "⬆ Justificar" : "⬇ Justificar"}
+                        ${
+                          isHighest
+                            ? "bg-red-100 text-red-700 border border-red-200"
+                            : isLowest
+                              ? "bg-blue-100 text-blue-700 border border-blue-200"
+                              : "bg-purple-100 text-purple-700 border border-purple-200"
+                        }`}>
+                        {isHighest ? "⬆ Justificar" : isLowest ? "⬇ Justificar" : "🗣️ Justificar"}
                       </span>
                     )}
                   </div>
