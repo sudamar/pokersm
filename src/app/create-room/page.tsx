@@ -74,7 +74,7 @@ export default function CreateRoomPage() {
               className="text-3xl text-white cursor-pointer"
               style={{ fontFamily: "'Fredoka One', cursive" }}
             >
-              Scrum Emotions
+              SudaPoker
             </h1>
           </Link>
         </div>

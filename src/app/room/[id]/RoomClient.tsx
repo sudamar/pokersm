@@ -210,7 +210,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <h1 className="text-3xl text-white cursor-pointer" style={{ fontFamily: "'Fredoka One', cursive" }}>
-              Scrum Emotions
+              SudaPoker
             </h1>
           </Link>
           <div className="flex items-center space-x-2">

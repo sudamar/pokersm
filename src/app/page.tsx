@@ -14,13 +14,13 @@ export default function Home() {
                 alt="Inside Out Joy character head icon bright yellow happy face"
               />
               <h1 className="text-3xl text-white" style={{ fontFamily: "'Fredoka One', cursive" }}>
-                Scrum Emotions
+                Suda Poker Planing
               </h1>
             </div>
             <nav className="hidden md:flex space-x-6">
-              <a href="#home" className="text-white hover:text-yellow-200 transition-colors font-semibold">Início</a>
-              <a href="#about" className="text-white hover:text-yellow-200 transition-colors font-semibold">Como Funciona</a>
-              <a href="#contact" className="text-white hover:text-yellow-200 transition-colors font-semibold">Contato</a>
+              <a href="#hero" className="text-white hover:text-yellow-200 transition-colors font-semibold">Início</a>
+              <a href="#features" className="text-white hover:text-yellow-200 transition-colors font-semibold">Como Funciona</a>
+              <a href="mailto:sudamar@gmail.com" className="text-white hover:text-yellow-200 transition-colors font-semibold">Contato</a>
             </nav>
             <div className="flex space-x-3">
               <button disabled title="Em breve" className="bg-white text-purple-400 px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed">
@@ -53,8 +53,8 @@ export default function Home() {
                 className="text-6xl text-purple-800 mb-6 leading-tight"
                 style={{ fontFamily: "'Fredoka One', cursive" }}
               >
-                Planning Poker com as{" "}
-                <span className="text-yellow-500">Emoções</span>
+                Planning Poker {" "}
+                <span className="text-yellow-500">SudaSimples</span>
               </h1>
               <p className="text-xl text-purple-700 mb-8 font-semibold">
                 Transforme suas estimativas Scrum numa experiência divertida com os personagens do Divertida Mente!
@@ -225,7 +225,7 @@ export default function Home() {
                   alt="Inside Out Joy character head icon bright yellow"
                 />
                 <h3 className="text-xl" style={{ fontFamily: "'Fredoka One', cursive" }}>
-                  Scrum Emotions
+                  SudaPoker
                 </h3>
               </div>
               <p className="text-purple-300">
@@ -273,7 +273,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-purple-700 mt-8 pt-8 text-center text-purple-300">
-            <p>© 2024 Scrum Emotions. Todos os direitos reservados.</p>
+            <p>© 2024 SudaPoker. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

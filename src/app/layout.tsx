@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Scrum Emotions — Planning Poker com as Emoções",
+  title: "SudaPoker — Planning Poker com as Emoções",
   description: "Transforme suas estimativas Scrum numa experiência divertida com os personagens do Divertida Mente!",
 };
 
