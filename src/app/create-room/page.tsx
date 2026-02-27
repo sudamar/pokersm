@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -72,7 +73,7 @@ export default function CreateRoomPage() {
           <Link href="/">
             <h1
               className="text-3xl text-white cursor-pointer"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               SudaPoker
             </h1>
@@ -92,7 +93,7 @@ export default function CreateRoomPage() {
             />
             <h2
               className="text-3xl text-purple-800"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Criar Sala
             </h2>

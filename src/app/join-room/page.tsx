@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -136,7 +137,7 @@ function JoinRoomPageContent() {
           <Link href="/">
             <h1
               className="text-3xl text-white cursor-pointer"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               SudaPoker
             </h1>
@@ -155,7 +156,7 @@ function JoinRoomPageContent() {
             />
             <h2
               className="text-3xl text-purple-800"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Entrar em Sala
             </h2>
@@ -296,7 +297,7 @@ function JoinRoomFallback() {
         <div className="container mx-auto px-6 py-4">
           <h1
             className="text-3xl text-white"
-            style={{ fontFamily: "'Fredoka One', cursive" }}
+            style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
           >
             SudaPoker
           </h1>

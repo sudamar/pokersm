@@ -13,12 +13,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Nunito:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body className="font-[Nunito,sans-serif] bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 min-h-screen antialiased">
         {children}
       </body>

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 
 export default function Home() {
@@ -13,7 +14,7 @@ export default function Home() {
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/139a8f0dd8-722fb40d7abea17e7acb.png"
                 alt="Inside Out Joy character head icon bright yellow happy face"
               />
-              <h1 className="text-xl sm:text-3xl text-white" style={{ fontFamily: "'Fredoka One', cursive" }}>
+              <h1 className="text-xl sm:text-3xl text-white" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                 Suda Poker Planing
               </h1>
             </div>
@@ -51,7 +52,7 @@ export default function Home() {
             <div className="w-1/2">
               <h1
                 className="text-6xl text-purple-800 mb-6 leading-tight"
-                style={{ fontFamily: "'Fredoka One', cursive" }}
+                style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
               >
                 Planning Poker {" "}
                 <span className="text-yellow-500">SudaSimples</span>
@@ -89,7 +90,7 @@ export default function Home() {
           <div className="container mx-auto px-6">
             <h2
               className="text-4xl text-center text-purple-800 mb-16"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Como Funciona o Suda Poker?
             </h2>
@@ -136,7 +137,7 @@ export default function Home() {
           <div className="container mx-auto px-6">
             <h2
               className="text-4xl text-center text-purple-800 mb-16"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Sistema de Pontuação
             </h2>
@@ -196,7 +197,7 @@ export default function Home() {
           <div className="container mx-auto px-6 text-center">
             <h2
               className="text-5xl text-white mb-8"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
+              style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Pronto para Começar?
             </h2>
@@ -226,7 +227,7 @@ export default function Home() {
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/478eefaf8c-84e8ad0045cc0301c20f.png"
                   alt="Inside Out Joy character head icon bright yellow"
                 />
-                <h3 className="text-xl" style={{ fontFamily: "'Fredoka One', cursive" }}>
+                <h3 className="text-xl" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                   SudaPoker
                 </h3>
               </div>

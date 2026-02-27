@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -275,7 +276,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
       <header className="rainbow-gradient shadow-lg">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
-            <h1 className="text-3xl text-white cursor-pointer" style={{ fontFamily: "'Fredoka One', cursive" }}>
+            <h1 className="text-3xl text-white cursor-pointer" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               SudaPoker
             </h1>
           </Link>
@@ -293,7 +294,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">História para Pontuar</p>
-              <h2 className="text-4xl text-purple-800 mb-1 truncate" style={{ fontFamily: "'Fredoka One', cursive" }}>
+              <h2 className="text-4xl text-purple-800 mb-1 truncate" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                 {room.name}
               </h2>
               <p className="text-purple-400 text-sm">
@@ -322,7 +323,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <div className={`flex flex-col items-center gap-1 min-w-[90px] ${isUrgent ? "text-red-500" : "text-purple-700"}`}>
                 <span
                   className={`text-3xl font-bold ${isUrgent ? "timer-blink" : ""}`}
-                  style={{ fontFamily: "'Fredoka One', cursive" }}
+                  style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
                 >
                   {formatTime(timeLeft)}
                 </span>
@@ -392,7 +393,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
         {/* ── Tela de resultado (após revelação) ───────────── */}
         {room.revealed && (
           <div className="bg-white rounded-3xl shadow-xl p-8">
-            <h3 className="text-2xl text-purple-800 mb-2 text-center" style={{ fontFamily: "'Fredoka One', cursive" }}>
+            <h3 className="text-2xl text-purple-800 mb-2 text-center" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               🎉 Resultado da Votação
             </h3>
 
@@ -405,7 +406,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                   {winCard && (
                     <img src={winCard.img} alt={winCard.label} className="w-20 h-20 object-contain drop-shadow-lg mb-2" />
                   )}
-                  <span className="text-5xl font-bold text-yellow-700" style={{ fontFamily: "'Fredoka One', cursive" }}>
+                  <span className="text-5xl font-bold text-yellow-700" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                     {winnerVote}
                   </span>
                   {winCard && <span className="text-sm text-yellow-600 mt-1">{winCard.label}</span>}
@@ -440,7 +441,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                     <span className="font-bold text-purple-800 text-sm text-center leading-tight">{p.name}</span>
                     <span className={`text-2xl font-bold mt-1 ${
                       isHighest ? "text-red-600" : isLowest ? "text-blue-600" : card ? "text-purple-700" : "text-gray-400"
-                    }`} style={{ fontFamily: "'Fredoka One', cursive" }}>
+                    }`} style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                       {p.vote != null ? p.vote : "—"}
                     </span>
                     {card && <span className={`text-xs mt-0.5 ${isHighest ? "text-red-400" : isLowest ? "text-blue-400" : "text-purple-400"}`}>{card.label}</span>}
@@ -460,7 +461,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
         {/* ── Cartas de votação (antes de votar, antes da revelação) ── */}
         {myName && !hasVoted && !room.revealed && (
           <div className="bg-white rounded-3xl shadow-xl p-8">
-            <h3 className="text-2xl text-purple-800 mb-2" style={{ fontFamily: "'Fredoka One', cursive" }}>
+            <h3 className="text-2xl text-purple-800 mb-2" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               {isVoting ? "Escolha sua carta" : "Pronto para votar?"}
             </h3>
             <p className="text-purple-400 text-sm mb-6">
@@ -507,7 +508,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 <div className="text-5xl mb-3">✅</div>
               );
             })()}
-            <h3 className="text-2xl text-purple-800 mb-1" style={{ fontFamily: "'Fredoka One', cursive" }}>
+            <h3 className="text-2xl text-purple-800 mb-1" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               Voto registrado!
             </h3>
             <p className="text-purple-400 text-sm mb-4">
@@ -516,7 +517,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <br />Aguardando o criador revelar ou o tempo acabar...
             </p>
             <button
-              onClick={startVoting}
+              onClick={unvote}
               className="text-sm text-purple-500 underline hover:text-purple-700 transition-colors"
             >
               Alterar voto
@@ -526,7 +527,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
         {/* ── Lista de participantes ───────────────────────── */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h3 className="text-2xl text-purple-800 mb-6" style={{ fontFamily: "'Fredoka One', cursive" }}>
+          <h3 className="text-2xl text-purple-800 mb-6" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
             Participantes ({room.participants.length})
           </h3>
           <ul className="space-y-3">
