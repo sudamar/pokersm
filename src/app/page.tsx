@@ -5,15 +5,15 @@ export default function Home() {
     <>
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <header id="header" className="rainbow-gradient shadow-lg relative overflow-hidden">
-        <div className="container mx-auto px-6 py-4 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 py-4 relative z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <img
-                className="w-12 h-12 rounded-full"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/139a8f0dd8-722fb40d7abea17e7acb.png"
                 alt="Inside Out Joy character head icon bright yellow happy face"
               />
-              <h1 className="text-3xl text-white" style={{ fontFamily: "'Fredoka One', cursive" }}>
+              <h1 className="text-xl sm:text-3xl text-white" style={{ fontFamily: "'Fredoka One', cursive" }}>
                 Suda Poker Planing
               </h1>
             </div>
@@ -22,11 +22,11 @@ export default function Home() {
               <a href="#features" className="text-white hover:text-yellow-200 transition-colors font-semibold">Como Funciona</a>
               <a href="mailto:sudamar@gmail.com" className="text-white hover:text-yellow-200 transition-colors font-semibold">Contato</a>
             </nav>
-            <div className="flex space-x-3">
-              <button disabled title="Em breve" className="bg-white text-purple-400 px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed">
+            <div className="hidden sm:flex space-x-3">
+              <button disabled title="Em breve" className="bg-white text-purple-400 px-4 sm:px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed text-sm sm:text-base">
                 Entrar
               </button>
-              <button disabled title="Em breve" className="bg-yellow-400 text-purple-500 px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed">
+              <button disabled title="Em breve" className="bg-yellow-400 text-purple-500 px-4 sm:px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed text-sm sm:text-base">
                 Cadastrar
               </button>
             </div>
@@ -60,15 +60,17 @@ export default function Home() {
                 Transforme suas estimativas Scrum numa experiência divertida com os personagens do Divertida Mente!
               </p>
               <div className="flex space-x-4">
-                <Link href="/create-room">
-                  <button className="joy-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all">
-                    Criar Sala
-                  </button>
+                <Link
+                  href="/create-room"
+                  className="joy-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center"
+                >
+                  Criar Sala
                 </Link>
-                <Link href="/join-room">
-                  <button className="sadness-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all">
-                    Entrar em Sala
-                  </button>
+                <Link
+                  href="/join-room"
+                  className="sadness-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center"
+                >
+                  Entrar em Sala
                 </Link>
               </div>
             </div>
@@ -89,7 +91,7 @@ export default function Home() {
               className="text-4xl text-center text-purple-800 mb-16"
               style={{ fontFamily: "'Fredoka One', cursive" }}
             >
-              Como Funciona
+              Como Funciona o Suda Poker?
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-yellow-100 to-yellow-200 transform hover:scale-105 transition-all">
@@ -100,7 +102,7 @@ export default function Home() {
                 />
                 <h3 className="text-2xl font-bold text-purple-800 mb-4">PO Cria a Sala</h3>
                 <p className="text-purple-600">
-                  O Product Owner cria uma sala e convida a equipe para participar das estimativas
+                  O(A) Scrum Master cria uma sala e convida a equipe para participar das estimativas
                 </p>
               </div>
               <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-blue-100 to-blue-200 transform hover:scale-105 transition-all">

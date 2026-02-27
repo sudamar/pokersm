@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Room } from "@/lib/types";
 
@@ -20,8 +20,10 @@ function writeNameCookie(name: string) {
   document.cookie = `${COOKIE_NAME}=${encodeURIComponent(name)}; path=/; max-age=${COOKIE_MAX_AGE}`;
 }
 
-export default function JoinRoomPage() {
+function JoinRoomPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sharedRoomId = (searchParams.get("roomId") ?? "").trim();
   const [name, setName] = useState("");
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -39,14 +41,50 @@ export default function JoinRoomPage() {
     }
   }, []);
 
-  // Busca salas disponíveis ao carregar
+  // Busca sala específica quando vem de link compartilhado.
+  // Caso contrário, busca lista de salas.
   useEffect(() => {
     async function fetchRooms() {
+      setFetching(true);
+      setError("");
+
+      if (sharedRoomId) {
+        setSelectedRoomId("");
+        try {
+          const res = await fetch(`/api/rooms/${encodeURIComponent(sharedRoomId)}`);
+          if (!res.ok) {
+            setRooms([]);
+            setSelectedRoomId("");
+            setError("A sala compartilhada não foi encontrada ou já expirou.");
+            return;
+          }
+
+          const room = (await res.json()) as Room;
+          const summary: RoomSummary = {
+            id: room.id,
+            name: room.name,
+            creatorName: room.creatorName,
+            participants: room.participants,
+          };
+          setRooms([summary]);
+          setSelectedRoomId(summary.id);
+          return;
+        } catch {
+          setRooms([]);
+          setSelectedRoomId("");
+          setError("Erro ao carregar a sala compartilhada.");
+          return;
+        } finally {
+          setFetching(false);
+        }
+      }
+
       try {
         const res = await fetch("/api/rooms");
         const data = await res.json();
         setRooms(data);
         if (data.length > 0) setSelectedRoomId(data[0].id);
+        else setSelectedRoomId("");
       } catch {
         setError("Erro ao carregar salas.");
       } finally {
@@ -54,11 +92,12 @@ export default function JoinRoomPage() {
       }
     }
     fetchRooms();
-  }, []);
+  }, [sharedRoomId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedRoomId) {
+    const targetRoomId = sharedRoomId || selectedRoomId;
+    if (!targetRoomId) {
       setError("Selecione uma sala.");
       return;
     }
@@ -66,7 +105,7 @@ export default function JoinRoomPage() {
     setError("");
 
     try {
-      const res = await fetch(`/api/rooms/${selectedRoomId}/join`, {
+      const res = await fetch(`/api/rooms/${encodeURIComponent(targetRoomId)}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
@@ -80,8 +119,8 @@ export default function JoinRoomPage() {
 
       // Salva o nome no cookie (30 dias) e no sessionStorage da sala
       writeNameCookie(name.trim());
-      sessionStorage.setItem(`room-${selectedRoomId}-name`, name.trim());
-      router.push(`/room/${selectedRoomId}`);
+      sessionStorage.setItem(`room-${targetRoomId}-name`, name.trim());
+      router.push(`/room/${targetRoomId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
@@ -121,7 +160,9 @@ export default function JoinRoomPage() {
               Entrar em Sala
             </h2>
             <p className="text-purple-500 mt-2 text-sm">
-              Escolha uma sala e informe seu nome
+              {sharedRoomId
+                ? "Informe apenas seu nome para entrar na sala compartilhada"
+                : "Escolha uma sala e informe seu nome"}
             </p>
           </div>
 
@@ -153,17 +194,19 @@ export default function JoinRoomPage() {
 
             <div>
               <label className="block text-purple-700 font-semibold mb-1 text-sm">
-                Sala disponível
+                {sharedRoomId ? "Sala compartilhada" : "Sala disponível"}
               </label>
 
               {fetching ? (
                 <div className="text-center py-6 text-purple-400 text-sm">
-                  Carregando salas...
+                  {sharedRoomId ? "Carregando sala..." : "Carregando salas..."}
                 </div>
               ) : rooms.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-purple-400 text-sm mb-3">
-                    Nenhuma sala disponível no momento.
+                    {sharedRoomId
+                      ? "Não foi possível encontrar essa sala."
+                      : "Nenhuma sala disponível no momento."}
                   </p>
                   <Link
                     href="/create-room"
@@ -171,6 +214,21 @@ export default function JoinRoomPage() {
                   >
                     Criar uma sala →
                   </Link>
+                </div>
+              ) : sharedRoomId ? (
+                <div className="w-full text-left px-4 py-3 rounded-2xl border-2 border-purple-500 bg-purple-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-purple-800 text-sm">{rooms[0].name}</p>
+                      <p className="text-purple-400 text-xs">
+                        Criado por {rooms[0].creatorName}
+                      </p>
+                    </div>
+                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-semibold">
+                      {rooms[0].participants.length}{" "}
+                      {rooms[0].participants.length === 1 ? "pessoa" : "pessoas"}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -206,10 +264,10 @@ export default function JoinRoomPage() {
               )}
             </div>
 
-            {rooms.length > 0 && (
+            {selectedRoomId && (
               <button
                 type="submit"
-                disabled={loading || !selectedRoomId}
+                disabled={loading}
                 className="w-full sadness-gradient text-white py-3 rounded-full font-bold text-lg
                            hover:shadow-xl transform hover:scale-105 transition-all
                            disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
@@ -228,5 +286,35 @@ export default function JoinRoomPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function JoinRoomFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200">
+      <header className="rainbow-gradient shadow-lg">
+        <div className="container mx-auto px-6 py-4">
+          <h1
+            className="text-3xl text-white"
+            style={{ fontFamily: "'Fredoka One', cursive" }}
+          >
+            SudaPoker
+          </h1>
+        </div>
+      </header>
+      <main className="flex items-center justify-center min-h-[calc(100vh-72px)] px-4 py-12">
+        <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md text-center">
+          <p className="text-purple-600 font-semibold">Carregando sala...</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default function JoinRoomPage() {
+  return (
+    <Suspense fallback={<JoinRoomFallback />}>
+      <JoinRoomPageContent />
+    </Suspense>
   );
 }

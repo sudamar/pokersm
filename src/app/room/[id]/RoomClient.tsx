@@ -49,17 +49,39 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const [room, setRoom]           = useState<Room>(initialRoom);
   const [connected, setConnected] = useState(false);
   const [myName, setMyName]       = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [voting, setVoting]       = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [destroying, setDestroying] = useState(false);
-  const [timeLeft, setTimeLeft]   = useState(() => calcTimeLeft(initialRoom.createdAt));
+  const [sharing, setSharing] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<"idle" | "success" | "error">("idle");
+  const [timeLeft, setTimeLeft]   = useState(TIMER_SECONDS);
   const revealCalled              = useRef(false);
 
-  // Nome salvo no sessionStorage pelo /create-room ou /join-room
+  // Nome salvo no sessionStorage pelo /create-room ou /join-room.
+  // Sem nome salvo, redireciona para a tela de entrada da sala.
   useEffect(() => {
     const saved = sessionStorage.getItem(`room-${roomId}-name`);
-    if (saved) setMyName(saved);
-  }, [roomId]);
+    if (saved) {
+      setMyName(saved);
+      setCheckingAccess(false);
+      return;
+    }
+    router.replace(`/join-room?roomId=${roomId}`);
+  }, [roomId, router]);
+
+  // Marca quando já hidratou no cliente para renderizações dependentes de locale
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Mensagem temporária de feedback do botão de compartilhar
+  useEffect(() => {
+    if (shareFeedback === "idle") return;
+    const timeout = window.setTimeout(() => setShareFeedback("idle"), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [shareFeedback]);
 
   // SSE — recebe atualizações em tempo real
   useEffect(() => {
@@ -170,6 +192,40 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     }
   }, [myName, roomId, destroying, router]);
 
+  const handleShareRoom = useCallback(async () => {
+    if (sharing) return;
+    setSharing(true);
+    setShareFeedback("idle");
+
+    const shareUrl = `${window.location.origin}/join-room?roomId=${encodeURIComponent(roomId)}`;
+    const shareText = `Entre na sala "${room.name}" no SudaPoker`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "SudaPoker",
+          text: shareText,
+          url: shareUrl,
+        });
+        setShareFeedback("success");
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareFeedback("success");
+        return;
+      }
+
+      setShareFeedback("error");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareFeedback("error");
+    } finally {
+      setSharing(false);
+    }
+  }, [room.name, roomId, sharing]);
+
   const me        = myName ? room.participants.find((p) => p.name === myName) : null;
   const hasVoted  = me?.status === "finalizado";
   const isVoting  = me?.status === "votando";
@@ -202,6 +258,16 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const maxVote = hasOutliers ? Math.max(...votes) : null;
   const minVote = hasOutliers ? Math.min(...votes) : null;
 
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 flex items-center justify-center px-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+          <p className="text-purple-700 font-semibold">Redirecionando para entrada da sala...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200">
 
@@ -233,6 +299,22 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <p className="text-purple-400 text-sm">
                 Criado por <span className="font-semibold text-purple-600">{room.creatorName}</span>
               </p>
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={handleShareRoom}
+                  disabled={sharing}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                             transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {sharing ? "Compartilhando..." : "🔗 Compartilhar Sala"}
+                </button>
+                {shareFeedback === "success" && (
+                  <span className="text-xs text-green-600 font-semibold">Link pronto para envio.</span>
+                )}
+                {shareFeedback === "error" && (
+                  <span className="text-xs text-red-500 font-semibold">Não foi possível compartilhar agora.</span>
+                )}
+              </div>
             </div>
 
             {/* Cronômetro */}
@@ -479,7 +561,13 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                         )}
                       </div>
                       <span className="text-xs text-purple-400">
-                        Entrou às {new Date(p.joinedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        Entrou às{" "}
+                        {mounted
+                          ? new Date(p.joinedAt).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "--:--"}
                       </span>
                     </div>
                   </div>
