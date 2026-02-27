@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+::-webkit-scrollbar { display: none; }
+
+.joy-gradient     { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+.sadness-gradient { background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%); }
+.anger-gradient   { background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%); }
+.fear-gradient    { background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); }
+.disgust-gradient { background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%); }
+.rainbow-gradient {
+  background: linear-gradient(135deg, #FFD700 0%, #4A90E2 25%, #E74C3C 50%, #9B59B6 75%, #2ECC71 100%);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+.timer-blink { animation: blink 0.8s ease-in-out infinite; }
