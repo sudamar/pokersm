@@ -69,10 +69,10 @@ export default function CreateRoomPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200">
       {/* Header */}
       <header className="rainbow-gradient shadow-lg">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <h1
-              className="text-3xl text-white cursor-pointer"
+              className="text-2xl sm:text-3xl text-white cursor-pointer"
               style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               SudaPoker
@@ -82,17 +82,17 @@ export default function CreateRoomPage() {
       </header>
 
       {/* Form */}
-      <main className="flex items-center justify-center min-h-[calc(100vh-72px)] px-4 py-12">
-        <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-md">
+      <main className="flex items-center justify-center min-h-[calc(100vh-72px)] px-4 py-8 sm:py-12">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-10 w-full max-w-md">
           {/* Icon + title */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <img
-              className="w-24 h-24 mx-auto mb-4"
+              className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4"
               src="https://storage.googleapis.com/uxpilot-auth.appspot.com/4630205237-77960acc9522d915fd9b.png"
               alt="Joy"
             />
             <h2
-              className="text-3xl text-purple-800"
+              className="text-2xl sm:text-3xl text-purple-800"
               style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Criar Sala

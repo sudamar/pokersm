@@ -26,14 +26,22 @@ export async function POST(
   // Se o participante já existe com esse nome, retorna ele sem duplicar
   const existing = room.participants.find((p) => p.name === name.trim());
   if (existing) {
+    const now = new Date().toISOString();
+    existing.isViewingRoom = true;
+    existing.lastPresenceAt = now;
+    await roomStore.put(`room:${id}`, JSON.stringify(room));
+    notifyRoomUpdate(id);
     return NextResponse.json({ roomId: id, participantName: existing.name });
   }
 
+  const now = new Date().toISOString();
   room.participants.push({
     name: name.trim(),
     status: "online",
-    joinedAt: new Date().toISOString(),
+    joinedAt: now,
     vote: null,
+    isViewingRoom: true,
+    lastPresenceAt: now,
   });
 
   await roomStore.put(`room:${id}`, JSON.stringify(room));

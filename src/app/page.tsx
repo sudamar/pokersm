@@ -7,33 +7,38 @@ export default function Home() {
       {/* ── HEADER ─────────────────────────────────────────────── */}
       <header id="header" className="rainbow-gradient shadow-lg relative overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 py-4 relative z-10">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center space-x-2 sm:space-x-4">
               <img
                 className="w-9 h-9 sm:w-12 sm:h-12 rounded-full"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/139a8f0dd8-722fb40d7abea17e7acb.png"
                 alt="Inside Out Joy character head icon bright yellow happy face"
               />
-              <h1 className="text-xl sm:text-3xl text-white" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
+              <h1 className="text-lg sm:text-3xl text-white leading-tight" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                 Suda Poker Planing
               </h1>
             </div>
+            <div className="flex items-center gap-3">
             <nav className="hidden md:flex space-x-6">
               <a href="#hero" className="text-white hover:text-yellow-200 transition-colors font-semibold">Início</a>
               <a href="#features" className="text-white hover:text-yellow-200 transition-colors font-semibold">Como Funciona</a>
               <a href="mailto:sudamar@gmail.com" className="text-white hover:text-yellow-200 transition-colors font-semibold">Contato</a>
             </nav>
-            <div className="hidden sm:flex space-x-3">
-              <button disabled title="Em breve" className="bg-white text-purple-400 px-4 sm:px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed text-sm sm:text-base">
+            <div className="flex space-x-3">
+              <Link
+                href="/admin"
+                className="bg-white text-purple-600 px-4 sm:px-6 py-2 rounded-full font-semibold text-sm sm:text-base hover:bg-yellow-100 transition-colors"
+              >
                 Entrar
-              </button>
+              </Link>
               <button disabled title="Em breve" className="bg-yellow-400 text-purple-500 px-4 sm:px-6 py-2 rounded-full font-semibold opacity-50 cursor-not-allowed text-sm sm:text-base">
                 Cadastrar
               </button>
             </div>
+            </div>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-64 h-64 opacity-20">
+        <div className="absolute top-0 right-0 w-64 h-64 opacity-20 hidden sm:block">
           <img
             className="w-full h-full object-cover"
             src="https://storage.googleapis.com/uxpilot-auth.appspot.com/cae39086e4-0dad0fd79aa57cf5a0fb.png"
@@ -46,38 +51,38 @@ export default function Home() {
       <main id="main-content">
 
         {/* HERO */}
-        <section id="hero" className="h-[600px] relative overflow-hidden">
+        <section id="hero" className="relative overflow-hidden py-12 sm:py-16 lg:py-20">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 opacity-90" />
-          <div className="container mx-auto px-6 h-full flex items-center relative z-10">
-            <div className="w-1/2">
+          <div className="container mx-auto px-4 sm:px-6 h-full flex flex-col-reverse lg:flex-row items-center gap-10 relative z-10">
+            <div className="w-full lg:w-1/2 text-center lg:text-left">
               <h1
-                className="text-6xl text-purple-800 mb-6 leading-tight"
+                className="text-4xl sm:text-5xl lg:text-6xl text-purple-800 mb-4 sm:mb-6 leading-tight"
                 style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
               >
                 Planning Poker {" "}
                 <span className="text-yellow-500">SudaSimples</span>
               </h1>
-              <p className="text-xl text-purple-700 mb-8 font-semibold">
+              <p className="text-base sm:text-xl text-purple-700 mb-6 sm:mb-8 font-semibold">
                 Transforme suas estimativas Scrum numa experiência divertida com os personagens do Divertida Mente!
               </p>
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center lg:items-start justify-center lg:justify-start">
                 <Link
                   href="/create-room"
-                  className="joy-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center"
+                  className="joy-gradient text-white px-7 sm:px-8 py-3.5 sm:py-4 rounded-full text-base sm:text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center w-full sm:w-auto"
                 >
                   Criar Sala
                 </Link>
                 <Link
                   href="/join-room"
-                  className="sadness-gradient text-white px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center"
+                  className="sadness-gradient text-white px-7 sm:px-8 py-3.5 sm:py-4 rounded-full text-base sm:text-lg font-bold hover:shadow-xl transform hover:scale-105 transition-all inline-flex items-center justify-center w-full sm:w-auto"
                 >
                   Entrar em Sala
                 </Link>
               </div>
             </div>
-            <div className="w-1/2 relative">
+            <div className="w-full lg:w-1/2 relative">
               <img
-                className="w-full h-auto max-h-96 object-contain"
+                className="w-full h-auto max-h-72 sm:max-h-96 object-contain"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/51b6d630b3-4f84dfd1069d258f72de.png"
                 alt="Inside Out all five emotions Joy Sadness Anger Fear Disgust group happy colorful illustration"
               />
@@ -86,18 +91,18 @@ export default function Home() {
         </section>
 
         {/* FEATURES */}
-        <section id="features" className="py-20 bg-white">
-          <div className="container mx-auto px-6">
+        <section id="features" className="py-14 sm:py-20 bg-white">
+          <div className="container mx-auto px-4 sm:px-6">
             <h2
-              className="text-4xl text-center text-purple-800 mb-16"
+              className="text-3xl sm:text-4xl text-center text-purple-800 mb-10 sm:mb-16"
               style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Como Funciona o Suda Poker?
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-yellow-100 to-yellow-200 transform hover:scale-105 transition-all">
+              <div className="text-center p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-yellow-100 to-yellow-200 transform hover:scale-105 transition-all">
                 <img
-                  className="w-24 h-24 mx-auto mb-6"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/2e2e239206-2bfb959a3e1870afe747.png"
                   alt="Inside Out Joy character happy excited pointing up yellow bright"
                 />
@@ -106,9 +111,9 @@ export default function Home() {
                   O(A) Scrum Master cria uma sala e convida a equipe para participar das estimativas
                 </p>
               </div>
-              <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-blue-100 to-blue-200 transform hover:scale-105 transition-all">
+              <div className="text-center p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-blue-100 to-blue-200 transform hover:scale-105 transition-all">
                 <img
-                  className="w-24 h-24 mx-auto mb-6"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/a28acd6dd9-c83af1a232aa03ed00c4.png"
                   alt="Inside Out Sadness character thoughtful concentrated blue thinking"
                 />
@@ -117,9 +122,9 @@ export default function Home() {
                   Cada membro vota secretamente usando as emoções como pontuação
                 </p>
               </div>
-              <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 transform hover:scale-105 transition-all">
+              <div className="text-center p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 transform hover:scale-105 transition-all">
                 <img
-                  className="w-24 h-24 mx-auto mb-6"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/fc798fc30f-4ef39310d28f70262628.png"
                   alt="Inside Out all emotions celebrating together happy reveal moment colorful"
                 />
@@ -133,15 +138,15 @@ export default function Home() {
         </section>
 
         {/* VOTING CARDS */}
-        <section id="voting-cards" className="py-20 bg-gradient-to-br from-purple-100 to-pink-100">
-          <div className="container mx-auto px-6">
+        <section id="voting-cards" className="py-14 sm:py-20 bg-gradient-to-br from-purple-100 to-pink-100">
+          <div className="container mx-auto px-4 sm:px-6">
             <h2
-              className="text-4xl text-center text-purple-800 mb-16"
+              className="text-3xl sm:text-4xl text-center text-purple-800 mb-10 sm:mb-16"
               style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Sistema de Pontuação
             </h2>
-            <div className="grid grid-cols-5 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 max-w-4xl mx-auto">
               {[
                 {
                   cls: "joy-gradient",
@@ -181,10 +186,10 @@ export default function Home() {
               ].map((card) => (
                 <div
                   key={card.value}
-                  className={`${card.cls} p-6 rounded-2xl text-center transform hover:scale-110 transition-all shadow-lg`}
+                  className={`${card.cls} p-4 sm:p-6 rounded-2xl text-center transform hover:scale-110 transition-all shadow-lg`}
                 >
-                  <img className="w-16 h-16 mx-auto mb-4" src={card.img} alt={card.alt} />
-                  <h3 className="text-white font-bold text-2xl">{card.value}</h3>
+                  <img className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4" src={card.img} alt={card.alt} />
+                  <h3 className="text-white font-bold text-xl sm:text-2xl">{card.value}</h3>
                   <p className="text-white text-sm">{card.label}</p>
                 </div>
               ))}
@@ -193,22 +198,22 @@ export default function Home() {
         </section>
 
         {/* CTA */}
-        <section id="cta" className="py-20 rainbow-gradient">
-          <div className="container mx-auto px-6 text-center">
+        <section id="cta" className="py-14 sm:py-20 rainbow-gradient">
+          <div className="container mx-auto px-4 sm:px-6 text-center">
             <h2
-              className="text-5xl text-white mb-8"
+              className="text-3xl sm:text-5xl text-white mb-6 sm:mb-8"
               style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
             >
               Pronto para Começar?
             </h2>
-            <p className="text-xl text-white mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-xl text-white mb-8 sm:mb-12 max-w-2xl mx-auto">
               Junte-se a milhares de equipes que já tornaram suas estimativas mais divertidas e eficientes!
             </p>
-            <div className="flex justify-center space-x-6">
-              <button disabled title="Em breve" className="bg-white text-purple-400 px-10 py-4 rounded-full text-xl font-bold opacity-50 cursor-not-allowed shadow-xl">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6">
+              <button disabled title="Em breve" className="bg-white text-purple-400 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-lg sm:text-xl font-bold opacity-50 cursor-not-allowed shadow-xl w-full sm:w-auto">
                 Começar Agora
               </button>
-              <button disabled title="Em breve" className="border-2 border-white text-white px-10 py-4 rounded-full text-xl font-bold opacity-50 cursor-not-allowed">
+              <button disabled title="Em breve" className="border-2 border-white text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-lg sm:text-xl font-bold opacity-50 cursor-not-allowed w-full sm:w-auto">
                 Ver Demo
               </button>
             </div>
@@ -217,9 +222,9 @@ export default function Home() {
       </main>
 
       {/* ── FOOTER ─────────────────────────────────────────────── */}
-      <footer id="footer" className="bg-purple-900 text-white py-12">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8">
+      <footer id="footer" className="bg-purple-900 text-white py-10 sm:py-12">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <img

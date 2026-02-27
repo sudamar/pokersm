@@ -116,6 +116,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const [timeLeft, setTimeLeft]   = useState(TIMER_SECONDS);
   const revealCalled              = useRef(false);
   const lastHandledHonkId = useRef<string | null>(null);
+  const lastUrgentHornSecond = useRef<number | null>(null);
   const hornAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Nome salvo no sessionStorage pelo /create-room ou /join-room.
@@ -172,6 +173,60 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     }
     playHornTone();
   }, []);
+
+  const sendPresenceUpdate = useCallback(
+    (isViewingRoom: boolean, useBeacon = false) => {
+      if (!myName) return;
+
+      const endpoint = `/api/rooms/${encodeURIComponent(roomId)}/presence`;
+      const payload = JSON.stringify({ name: myName, isViewingRoom });
+
+      if (useBeacon && navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon(endpoint, blob);
+        return;
+      }
+
+      void fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    },
+    [myName, roomId]
+  );
+
+  // Heartbeat de presença da tela para o admin distinguir tela aberta x outra tela
+  useEffect(() => {
+    if (!myName) return;
+
+    const publishPresence = () => {
+      sendPresenceUpdate(document.visibilityState === "visible");
+    };
+
+    publishPresence();
+    const interval = window.setInterval(publishPresence, 10_000);
+
+    const onVisibilityChange = () => {
+      sendPresenceUpdate(document.visibilityState === "visible");
+    };
+    const onPageHide = () => {
+      sendPresenceUpdate(false, true);
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
+      sendPresenceUpdate(false, true);
+    };
+  }, [myName, sendPresenceUpdate]);
 
   const triggerHonkIfTarget = useCallback((payload: RoomHonkPayload) => {
     if (!myName) return;
@@ -431,6 +486,19 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const isUrgent  = timeLeft <= 30 && !room.revealed;
   const progress  = (timeLeft / TIMER_SECONDS) * 100;
 
+  // Últimos 10 segundos: toca horn.wav a cada 2 segundos
+  useEffect(() => {
+    if (room.revealed || timeLeft <= 0 || timeLeft > 10) {
+      lastUrgentHornSecond.current = null;
+      return;
+    }
+    if (timeLeft % 2 !== 0) return;
+    if (lastUrgentHornSecond.current === timeLeft) return;
+
+    lastUrgentHornSecond.current = timeLeft;
+    void playHornSound();
+  }, [room.revealed, timeLeft, playHornSound]);
+
   // ── Cálculos do resultado ────────────────────────────────
   const votedParticipants = room.participants.filter((p) => p.vote != null);
   const votes = votedParticipants.map((p) => p.vote as number);
@@ -471,20 +539,20 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="rainbow-gradient shadow-lg">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
           <Link href="/">
-            <h1 className="text-3xl text-white cursor-pointer" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
+            <h1 className="text-2xl sm:text-3xl text-white cursor-pointer" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               SudaPoker
             </h1>
           </Link>
           <div className="flex items-center space-x-2">
             <span className={`w-2.5 h-2.5 rounded-full transition-colors ${connected ? "bg-green-300" : "bg-white/40"}`} />
-            <span className="text-white text-sm font-semibold">{connected ? "Ao vivo" : "Conectando..."}</span>
+            <span className="text-white text-xs sm:text-sm font-semibold">{connected ? "Ao vivo" : "Conectando..."}</span>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-10 max-w-2xl space-y-6">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-2xl space-y-6">
         {honkNotice && (
           <div className="bg-amber-100 text-amber-800 border border-amber-300 rounded-2xl px-4 py-3 text-sm font-semibold">
             🔔 {honkNotice}
@@ -492,11 +560,11 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
         )}
 
         {/* ── Card da sala + cronômetro ─────────────────────── */}
-        <div className="bg-white rounded-3xl shadow-xl p-8">
+        <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">História para Pontuar</p>
-              <h2 className="text-4xl text-purple-800 mb-1 truncate" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
+              <h2 className="text-2xl sm:text-4xl text-purple-800 mb-1 break-words sm:truncate" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
                 {room.name}
               </h2>
               <p className="text-purple-400 text-sm">
@@ -506,7 +574,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 <button
                   onClick={handleShareRoom}
                   disabled={sharing}
-                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full font-bold text-xs w-full sm:w-auto
                              transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {sharing ? "Compartilhando..." : "🔗 Compartilhar"}
@@ -514,7 +582,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 <button
                   onClick={handleCopyRoomLink}
                   disabled={copyingLink}
-                  className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                  className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold text-xs w-full sm:w-auto
                              transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {copyingLink ? "Copiando..." : "📋 Copiar Link da Sala"}
@@ -522,7 +590,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 <button
                   onClick={handleRefreshRoom}
                   disabled={refreshingRoom}
-                  className="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                  className="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-full font-bold text-xs w-full sm:w-auto
                              transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {refreshingRoom ? "Atualizando..." : "🔄 Atualizar Sala"}
@@ -544,9 +612,9 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
             {/* Cronômetro */}
             {!room.revealed && (
-              <div className={`flex flex-col items-center gap-1 min-w-[90px] ${isUrgent ? "text-red-500" : "text-purple-700"}`}>
+              <div className={`flex flex-col items-center gap-1 min-w-[90px] w-full sm:w-auto ${isUrgent ? "text-red-500" : "text-purple-700"}`}>
                 <span
-                  className={`text-3xl font-bold ${isUrgent ? "timer-blink" : ""}`}
+                  className={`text-2xl sm:text-3xl font-bold ${isUrgent ? "timer-blink" : ""}`}
                   style={{ fontFamily: "var(--font-fredoka-one), cursive" }}
                 >
                   {formatTime(timeLeft)}
@@ -577,7 +645,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <button
                 onClick={handleReveal}
                 disabled={revealing}
-                className="anger-gradient text-white px-6 py-2.5 rounded-full font-bold text-sm
+                className="anger-gradient text-white px-6 py-2.5 rounded-full font-bold text-sm w-full sm:w-auto
                            hover:shadow-lg transform hover:scale-105 transition-all
                            disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               >
@@ -586,7 +654,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <button
                 onClick={handleHonkPendingVoters}
                 disabled={honking}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold text-sm
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold text-sm w-full sm:w-auto
                            hover:shadow-lg transform hover:scale-105 transition-all
                            disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               >
@@ -595,7 +663,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               <button
                 onClick={handleDestroy}
                 disabled={destroying}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-full font-bold text-sm
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-full font-bold text-sm w-full sm:w-auto
                            hover:shadow-lg transform hover:scale-105 transition-all
                            disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
               >
@@ -640,7 +708,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
         {/* ── Tela de resultado (após revelação) ───────────── */}
         {room.revealed && (
-          <div className="bg-white rounded-3xl shadow-xl p-8">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8">
             <h3 className="text-2xl text-purple-800 mb-2 text-center" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               🎉 Resultado da Votação
             </h3>
@@ -663,7 +731,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
             })()}
 
             {/* Grid de participantes */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {room.participants.map((p, i) => {
                 const card = CARDS.find((c) => c.value === p.vote);
                 const avatarCls = AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length];
@@ -715,7 +783,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
         {/* ── Cartas de votação (antes de votar, antes da revelação) ── */}
         {myName && !hasVoted && !room.revealed && (
-          <div className="bg-white rounded-3xl shadow-xl p-8">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8">
             <h3 className="text-2xl text-purple-800 mb-2" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
               {isVoting ? "Escolha sua carta" : "Pronto para votar?"}
             </h3>
@@ -726,19 +794,19 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
             {!isVoting ? (
               <button
                 onClick={startVoting}
-                className="joy-gradient text-white px-8 py-3 rounded-full font-bold
+                className="joy-gradient text-white px-8 py-3 rounded-full font-bold w-full sm:w-auto
                            hover:shadow-xl transform hover:scale-105 transition-all"
               >
                 Votar 🗳️
               </button>
             ) : (
-              <div className="grid grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {CARDS.map((card) => (
                   <button
                     key={card.value}
                     onClick={() => castVote(card.value)}
                     disabled={voting}
-                    className={`${card.cls} p-4 rounded-2xl text-center
+                    className={`${card.cls} p-3 sm:p-4 rounded-2xl text-center
                                 transform hover:scale-110 transition-all shadow-lg
                                 disabled:opacity-60 disabled:cursor-not-allowed`}
                   >
@@ -754,7 +822,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
 
         {/* ── Estado pós-voto, aguardando revelação ────────── */}
         {myName && hasVoted && !room.revealed && (
-          <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+          <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 text-center">
             {(() => {
               const voted = CARDS.find((c) => c.value === me?.vote);
               return voted ? (
@@ -781,7 +849,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
         )}
 
         {/* ── Lista de participantes ───────────────────────── */}
-        <div className="bg-white rounded-3xl shadow-xl p-8">
+        <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8">
           <h3 className="text-2xl text-purple-800 mb-6" style={{ fontFamily: "var(--font-fredoka-one), cursive" }}>
             Participantes ({room.participants.length})
           </h3>
@@ -798,7 +866,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               return (
                 <li
                   key={`${p.name}-${p.joinedAt}`}
-                  className={`flex items-center justify-between p-4 rounded-2xl border
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl border
                               transition-all hover:shadow-md
                               ${isMe ? "bg-purple-50 border-purple-200" : "bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100"}`}
                 >

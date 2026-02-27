@@ -52,7 +52,14 @@ export async function POST(request: NextRequest) {
     creatorName: creatorName.trim(),
     createdAt: now,
     participants: [
-      { name: creatorName.trim(), status: "online", joinedAt: now, vote: null },
+      {
+        name: creatorName.trim(),
+        status: "online",
+        joinedAt: now,
+        vote: null,
+        isViewingRoom: true,
+        lastPresenceAt: now,
+      },
     ],
     revealed: false,
   };

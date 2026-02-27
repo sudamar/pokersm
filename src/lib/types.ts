@@ -5,6 +5,8 @@ export interface Participant {
   status: ParticipantStatus;
   joinedAt: string;
   vote?: number | null; // null = ainda não votou
+  isViewingRoom?: boolean;
+  lastPresenceAt?: string;
 }
 
 export interface Room {
