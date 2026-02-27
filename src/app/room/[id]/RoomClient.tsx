@@ -45,6 +45,47 @@ interface Props {
   roomId: string;
 }
 
+interface RoomHonkPayload {
+  triggeredBy: string;
+  targets: string[];
+  sentAt: string;
+}
+
+function playHornSound() {
+  const audioCtor =
+    window.AudioContext ??
+    (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!audioCtor) return;
+
+  const ctx = new audioCtor();
+  const now = ctx.currentTime;
+
+  const playTone = (start: number, duration: number, frequency: number) => {
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.2, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration);
+  };
+
+  if (ctx.state === "suspended") {
+    void ctx.resume();
+  }
+
+  playTone(now + 0.02, 0.18, 720);
+  playTone(now + 0.28, 0.18, 620);
+
+  window.setTimeout(() => {
+    void ctx.close();
+  }, 1200);
+}
+
 export default function RoomClient({ initialRoom, roomId }: Props) {
   const router = useRouter();
   const [room, setRoom]           = useState<Room>(initialRoom);
@@ -56,7 +97,21 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const [revealing, setRevealing] = useState(false);
   const [destroying, setDestroying] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [shareFeedback, setShareFeedback] = useState<"idle" | "success" | "error">("idle");
+  const [copyingLink, setCopyingLink] = useState(false);
+  const [refreshingRoom, setRefreshingRoom] = useState(false);
+  const [honking, setHonking] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<
+    | "idle"
+    | "share-success"
+    | "share-error"
+    | "copied"
+    | "refresh-success"
+    | "refresh-error"
+    | "honk-success"
+    | "honk-empty"
+    | "honk-error"
+  >("idle");
+  const [honkNotice, setHonkNotice] = useState("");
   const [timeLeft, setTimeLeft]   = useState(TIMER_SECONDS);
   const revealCalled              = useRef(false);
 
@@ -77,27 +132,50 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     setMounted(true);
   }, []);
 
-  // Mensagem temporária de feedback do botão de compartilhar
+  // Mensagem temporária de feedback das ações da sala
   useEffect(() => {
-    if (shareFeedback === "idle") return;
-    const timeout = window.setTimeout(() => setShareFeedback("idle"), 2500);
+    if (actionFeedback === "idle") return;
+    const timeout = window.setTimeout(() => setActionFeedback("idle"), 2500);
     return () => window.clearTimeout(timeout);
-  }, [shareFeedback]);
+  }, [actionFeedback]);
+
+  // Mensagem temporária da buzina para quem ainda não votou
+  useEffect(() => {
+    if (!honkNotice) return;
+    const timeout = window.setTimeout(() => setHonkNotice(""), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [honkNotice]);
 
   // SSE — recebe atualizações em tempo real
   useEffect(() => {
     const es = new EventSource(`/api/rooms/${roomId}/events`);
-    es.addEventListener("room-update", (e: MessageEvent) => {
+    const onRoomUpdate = (e: MessageEvent) => {
       setRoom(JSON.parse(e.data) as Room);
       setConnected(true);
-    });
-    es.addEventListener("room-destroyed", () => {
+    };
+    const onRoomDestroyed = () => {
       es.close();
       router.push("/");
-    });
+    };
+    const onRoomHonk = (e: MessageEvent) => {
+      if (!myName) return;
+      const payload = JSON.parse(e.data) as RoomHonkPayload;
+      if (!payload.targets.includes(myName)) return;
+      playHornSound();
+      setHonkNotice(`${payload.triggeredBy} buzinou para você votar.`);
+    };
+
+    es.addEventListener("room-update", onRoomUpdate);
+    es.addEventListener("room-destroyed", onRoomDestroyed);
+    es.addEventListener("room-honk", onRoomHonk);
     es.onerror = () => setConnected(false);
-    return () => es.close();
-  }, [roomId, router]);
+    return () => {
+      es.removeEventListener("room-update", onRoomUpdate);
+      es.removeEventListener("room-destroyed", onRoomDestroyed);
+      es.removeEventListener("room-honk", onRoomHonk);
+      es.close();
+    };
+  }, [roomId, router, myName]);
 
   // Cronômetro — sincronizado via room.createdAt
   useEffect(() => {
@@ -196,7 +274,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const handleShareRoom = useCallback(async () => {
     if (sharing) return;
     setSharing(true);
-    setShareFeedback("idle");
+    setActionFeedback("idle");
 
     const shareUrl = `${window.location.origin}/join-room?roomId=${encodeURIComponent(roomId)}`;
     const shareText = `Entre na sala "${room.name}" no SudaPoker`;
@@ -208,24 +286,91 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
           text: shareText,
           url: shareUrl,
         });
-        setShareFeedback("success");
+        setActionFeedback("share-success");
         return;
       }
 
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        setShareFeedback("success");
+        setActionFeedback("copied");
         return;
       }
 
-      setShareFeedback("error");
+      setActionFeedback("share-error");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setShareFeedback("error");
+      setActionFeedback("share-error");
     } finally {
       setSharing(false);
     }
   }, [room.name, roomId, sharing]);
+
+  const handleCopyRoomLink = useCallback(async () => {
+    if (copyingLink) return;
+    setCopyingLink(true);
+    setActionFeedback("idle");
+
+    const shareUrl = `${window.location.origin}/join-room?roomId=${encodeURIComponent(roomId)}`;
+    try {
+      if (!navigator.clipboard?.writeText) {
+        setActionFeedback("share-error");
+        return;
+      }
+      await navigator.clipboard.writeText(shareUrl);
+      setActionFeedback("copied");
+    } catch {
+      setActionFeedback("share-error");
+    } finally {
+      setCopyingLink(false);
+    }
+  }, [copyingLink, roomId]);
+
+  const handleRefreshRoom = useCallback(async () => {
+    if (refreshingRoom) return;
+    setRefreshingRoom(true);
+    setActionFeedback("idle");
+
+    try {
+      const res = await fetch(`/api/rooms/${encodeURIComponent(roomId)}`);
+      if (!res.ok) {
+        setActionFeedback("refresh-error");
+        return;
+      }
+      const latest = (await res.json()) as Room;
+      setRoom(latest);
+      setConnected(true);
+      setActionFeedback("refresh-success");
+    } catch {
+      setActionFeedback("refresh-error");
+    } finally {
+      setRefreshingRoom(false);
+    }
+  }, [refreshingRoom, roomId]);
+
+  const handleHonkPendingVoters = useCallback(async () => {
+    if (!myName || honking || room.revealed || myName !== room.creatorName) return;
+    setHonking(true);
+    setActionFeedback("idle");
+
+    try {
+      const res = await fetch(`/api/rooms/${encodeURIComponent(roomId)}/honk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: myName }),
+      });
+      const data = (await res.json()) as { targets?: string[] };
+      if (!res.ok) {
+        setActionFeedback("honk-error");
+        return;
+      }
+      const totalTargets = Array.isArray(data.targets) ? data.targets.length : 0;
+      setActionFeedback(totalTargets > 0 ? "honk-success" : "honk-empty");
+    } catch {
+      setActionFeedback("honk-error");
+    } finally {
+      setHonking(false);
+    }
+  }, [myName, honking, room.revealed, room.creatorName, roomId]);
 
   const me        = myName ? room.participants.find((p) => p.name === myName) : null;
   const hasVoted  = me?.status === "finalizado";
@@ -288,6 +433,11 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
       </header>
 
       <main className="container mx-auto px-6 py-10 max-w-2xl space-y-6">
+        {honkNotice && (
+          <div className="bg-amber-100 text-amber-800 border border-amber-300 rounded-2xl px-4 py-3 text-sm font-semibold">
+            🔔 {honkNotice}
+          </div>
+        )}
 
         {/* ── Card da sala + cronômetro ─────────────────────── */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
@@ -307,13 +457,35 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                   className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full font-bold text-xs
                              transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {sharing ? "Compartilhando..." : "🔗 Compartilhar Sala"}
+                  {sharing ? "Compartilhando..." : "🔗 Compartilhar"}
                 </button>
-                {shareFeedback === "success" && (
-                  <span className="text-xs text-green-600 font-semibold">Link pronto para envio.</span>
+                <button
+                  onClick={handleCopyRoomLink}
+                  disabled={copyingLink}
+                  className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                             transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {copyingLink ? "Copiando..." : "📋 Copiar Link da Sala"}
+                </button>
+                <button
+                  onClick={handleRefreshRoom}
+                  disabled={refreshingRoom}
+                  className="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-full font-bold text-xs
+                             transition-all hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {refreshingRoom ? "Atualizando..." : "🔄 Atualizar Sala"}
+                </button>
+                {(actionFeedback === "share-success" || actionFeedback === "copied") && (
+                  <span className="text-xs text-green-600 font-semibold">Link copiado/compartilhado com sucesso.</span>
                 )}
-                {shareFeedback === "error" && (
-                  <span className="text-xs text-red-500 font-semibold">Não foi possível compartilhar agora.</span>
+                {actionFeedback === "share-error" && (
+                  <span className="text-xs text-red-500 font-semibold">Não foi possível copiar/compartilhar agora.</span>
+                )}
+                {actionFeedback === "refresh-success" && (
+                  <span className="text-xs text-green-600 font-semibold">Sala atualizada.</span>
+                )}
+                {actionFeedback === "refresh-error" && (
+                  <span className="text-xs text-red-500 font-semibold">Falha ao atualizar a sala.</span>
                 )}
               </div>
             </div>
@@ -360,6 +532,15 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
                 {revealing ? "Revelando..." : "🃏 Revelar Votos Agora"}
               </button>
               <button
+                onClick={handleHonkPendingVoters}
+                disabled={honking}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold text-sm
+                           hover:shadow-lg transform hover:scale-105 transition-all
+                           disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {honking ? "Buzinando..." : "📣 Buzinar Não Votantes"}
+              </button>
+              <button
                 onClick={handleDestroy}
                 disabled={destroying}
                 className="bg-red-500 hover:bg-red-600 text-white px-6 py-2.5 rounded-full font-bold text-sm
@@ -368,6 +549,21 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
               >
                 {destroying ? "Destruindo..." : "🗑️ Destruir Sala"}
               </button>
+              {actionFeedback === "honk-success" && (
+                <p className="text-green-600 text-xs w-full font-semibold">
+                  Buzina enviada para quem ainda não votou.
+                </p>
+              )}
+              {actionFeedback === "honk-empty" && (
+                <p className="text-purple-500 text-xs w-full font-semibold">
+                  Todos já votaram.
+                </p>
+              )}
+              {actionFeedback === "honk-error" && (
+                <p className="text-red-500 text-xs w-full font-semibold">
+                  Não foi possível buzinar agora.
+                </p>
+              )}
               <p className="text-purple-400 text-xs w-full">
                 Revela para todos antes do tempo acabar.
               </p>

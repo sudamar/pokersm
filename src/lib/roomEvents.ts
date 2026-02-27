@@ -18,3 +18,13 @@ export function notifyRoomUpdate(roomId: string) {
 export function notifyRoomDestroyed(roomId: string) {
   roomEventBus.emit(`room-destroyed:${roomId}`);
 }
+
+export interface RoomHonkPayload {
+  triggeredBy: string;
+  targets: string[];
+  sentAt: string;
+}
+
+export function notifyRoomHonk(roomId: string, payload: RoomHonkPayload) {
+  roomEventBus.emit(`room-honk:${roomId}`, payload);
+}

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { roomStore } from "@/lib/store";
-import { roomEventBus } from "@/lib/roomEvents";
+import { roomEventBus, type RoomHonkPayload } from "@/lib/roomEvents";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +64,12 @@ export async function GET(
       };
       roomEventBus.once(`room-destroyed:${id}`, onDestroyed);
 
+      // Ouve buzina do criador para usuários que ainda não votaram
+      const onHonk = (payload: RoomHonkPayload) => {
+        send("room-honk", payload);
+      };
+      roomEventBus.on(`room-honk:${id}`, onHonk);
+
       // Heartbeat para evitar timeout de proxies/browsers
       const heartbeat = setInterval(() => {
         safeEnqueue(encoder.encode(": heartbeat\n\n"));
@@ -74,6 +80,7 @@ export async function GET(
         closed = true;
         roomEventBus.off(`room:${id}`, onUpdate);
         roomEventBus.off(`room-destroyed:${id}`, onDestroyed);
+        roomEventBus.off(`room-honk:${id}`, onHonk);
         clearInterval(heartbeat);
       };
     },
