@@ -20,6 +20,7 @@ export function notifyRoomDestroyed(roomId: string) {
 }
 
 export interface RoomHonkPayload {
+  honkId: string;
   triggeredBy: string;
   targets: string[];
   sentAt: string;

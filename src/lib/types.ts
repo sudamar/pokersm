@@ -15,4 +15,8 @@ export interface Room {
   participants: Participant[];
   revealed: boolean;
   revealedAt?: string;
+  lastHonkId?: string;
+  lastHonkBy?: string;
+  lastHonkAt?: string;
+  lastHonkTargets?: string[];
 }

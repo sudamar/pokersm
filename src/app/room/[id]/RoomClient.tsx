@@ -46,6 +46,7 @@ interface Props {
 }
 
 interface RoomHonkPayload {
+  honkId: string;
   triggeredBy: string;
   targets: string[];
   sentAt: string;
@@ -114,6 +115,7 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
   const [honkNotice, setHonkNotice] = useState("");
   const [timeLeft, setTimeLeft]   = useState(TIMER_SECONDS);
   const revealCalled              = useRef(false);
+  const lastHandledHonkId = useRef<string | null>(null);
 
   // Nome salvo no sessionStorage pelo /create-room ou /join-room.
   // Sem nome salvo, redireciona para a tela de entrada da sala.
@@ -146,6 +148,17 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
     return () => window.clearTimeout(timeout);
   }, [honkNotice]);
 
+  const triggerHonkIfTarget = useCallback((payload: RoomHonkPayload) => {
+    if (!myName) return;
+    if (lastHandledHonkId.current === payload.honkId) return;
+    lastHandledHonkId.current = payload.honkId;
+    if (!payload.targets.includes(myName)) return;
+
+    playHornSound();
+    if (navigator.vibrate) navigator.vibrate([180, 80, 180]);
+    setHonkNotice(`${payload.triggeredBy} buzinou para você votar.`);
+  }, [myName]);
+
   // SSE — recebe atualizações em tempo real
   useEffect(() => {
     const es = new EventSource(`/api/rooms/${roomId}/events`);
@@ -158,11 +171,8 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
       router.push("/");
     };
     const onRoomHonk = (e: MessageEvent) => {
-      if (!myName) return;
       const payload = JSON.parse(e.data) as RoomHonkPayload;
-      if (!payload.targets.includes(myName)) return;
-      playHornSound();
-      setHonkNotice(`${payload.triggeredBy} buzinou para você votar.`);
+      triggerHonkIfTarget(payload);
     };
 
     es.addEventListener("room-update", onRoomUpdate);
@@ -175,7 +185,24 @@ export default function RoomClient({ initialRoom, roomId }: Props) {
       es.removeEventListener("room-honk", onRoomHonk);
       es.close();
     };
-  }, [roomId, router, myName]);
+  }, [roomId, router, triggerHonkIfTarget]);
+
+  // Fallback robusto: também reage a buzina recebida via room-update
+  useEffect(() => {
+    if (!room.lastHonkId || !room.lastHonkBy || !room.lastHonkAt || !room.lastHonkTargets) return;
+    triggerHonkIfTarget({
+      honkId: room.lastHonkId,
+      triggeredBy: room.lastHonkBy,
+      sentAt: room.lastHonkAt,
+      targets: room.lastHonkTargets,
+    });
+  }, [
+    room.lastHonkId,
+    room.lastHonkBy,
+    room.lastHonkAt,
+    room.lastHonkTargets,
+    triggerHonkIfTarget,
+  ]);
 
   // Cronômetro — sincronizado via room.createdAt
   useEffect(() => {

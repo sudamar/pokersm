@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { roomStore } from "@/lib/store";
-import { notifyRoomHonk } from "@/lib/roomEvents";
+import { notifyRoomHonk, notifyRoomUpdate } from "@/lib/roomEvents";
 import type { Room } from "@/lib/types";
 
 // POST /api/rooms/[id]/honk — avisa participantes que ainda não votaram (apenas criador)
@@ -32,13 +33,25 @@ export async function POST(
     .filter((participant) => participant.name !== actorName && participant.status !== "finalizado")
     .map((participant) => participant.name);
 
+  let honkId: string | null = null;
   if (targets.length > 0) {
+    honkId = randomUUID();
+    const sentAt = new Date().toISOString();
+    room.lastHonkId = honkId;
+    room.lastHonkBy = actorName;
+    room.lastHonkAt = sentAt;
+    room.lastHonkTargets = targets;
+
+    await roomStore.put(`room:${id}`, JSON.stringify(room));
+    notifyRoomUpdate(id);
+
     notifyRoomHonk(id, {
+      honkId,
       triggeredBy: actorName,
       targets,
-      sentAt: new Date().toISOString(),
+      sentAt,
     });
   }
 
-  return NextResponse.json({ ok: true, targets });
+  return NextResponse.json({ ok: true, targets, honkId });
 }
